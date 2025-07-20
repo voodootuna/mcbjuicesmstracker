@@ -1,0 +1,8 @@
+{
+    "name": "juice/payment-api",
+    "description": "MCB Juice Payment SMS Processing API",
+    "type": "project",
+    "require": {
+        "flightphp/core": "^3.16"
+    }
+}

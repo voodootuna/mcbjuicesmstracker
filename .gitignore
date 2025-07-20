@@ -1,0 +1,45 @@
+# Composer dependencies
+vendor/
+
+# Database files (contains sensitive payment data)
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+
+# Environment files (may contain secrets)
+.env
+.env.local
+.env.production
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+.tmp
+
+# Backup files
+*.bak
+*.backup
+
+# Project documentation (contains business details)
+PLAN.md
+project.md
+
+# Keep composer.lock for production consistency
+!composer.lock
