@@ -5,27 +5,41 @@ Flight::route('POST /api/sms', function() {
     
     $input = file_get_contents('php://input');
     
-    // Debug: Log incoming request
-    $debugData = [
-        'timestamp' => date('Y-m-d H:i:s'),
-        'method' => $_SERVER['REQUEST_METHOD'],
-        'headers' => getallheaders(),
-        'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'NOT_SET',
-        'content_length' => $_SERVER['CONTENT_LENGTH'] ?? 'NOT_SET',
-        'raw_body' => $input,
-        'body_length' => strlen($input),
-        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'NOT_SET'
-    ];
+    // Debug: Log incoming request (only if enabled)
+    if (getenv('DEBUG_SMS_REQUESTS') === 'true' || $_ENV['DEBUG_SMS_REQUESTS'] ?? false) {
+        $debugData = [
+            'timestamp' => date('Y-m-d H:i:s'),
+            'method' => $_SERVER['REQUEST_METHOD'],
+            'headers' => getallheaders(),
+            'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'NOT_SET',
+            'content_length' => $_SERVER['CONTENT_LENGTH'] ?? 'NOT_SET',
+            'raw_body' => $input,
+            'body_length' => strlen($input),
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'NOT_SET'
+        ];
+        
+        file_put_contents(__DIR__ . '/../debug_requests.log', 
+            "=== REQUEST DEBUG ===\n" . 
+            json_encode($debugData, JSON_PRETTY_PRINT) . 
+            "\n\n", FILE_APPEND);
+    }
     
-    file_put_contents(__DIR__ . '/../debug_requests.log', 
-        "=== REQUEST DEBUG ===\n" . 
-        json_encode($debugData, JSON_PRETTY_PRINT) . 
-        "\n\n", FILE_APPEND);
-    
-    $data = json_decode($input, true);
+    // Fix newlines in JSON from MacDroid
+    $cleanInput = str_replace(["\n", "\r"], [" ", " "], $input);
+    $data = json_decode($cleanInput, true);
     
     if (json_last_error() !== JSON_ERROR_NONE) {
-        Flight::halt(400, json_encode(['error' => 'Invalid JSON']));
+        $error = [
+            'error' => 'Invalid JSON', 
+            'json_error' => json_last_error_msg(),
+            'raw_input' => $input,
+            'cleaned_input' => $cleanInput
+        ];
+        if (getenv('DEBUG_SMS_REQUESTS') === 'true' || $_ENV['DEBUG_SMS_REQUESTS'] ?? false) {
+            file_put_contents(__DIR__ . '/../debug_requests.log', 
+                "JSON ERROR: " . json_encode($error, JSON_PRETTY_PRINT) . "\n\n", FILE_APPEND);
+        }
+        Flight::halt(400, json_encode(['error' => 'Invalid JSON: ' . json_last_error_msg()]));
     }
     
     if (!isset($data['sender']) || !isset($data['content'])) {
