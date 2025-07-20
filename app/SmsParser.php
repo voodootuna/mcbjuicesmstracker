@@ -1,10 +1,36 @@
 <?php
 
 class SmsParser {
+    private $allowedSenders = [];
+    
+    public function __construct() {
+        $this->loadAllowedSenders();
+    }
+    
+    private function loadAllowedSenders() {
+        $configPath = __DIR__ . '/../config/allowed_senders.json';
+        
+        if (file_exists($configPath)) {
+            $config = json_decode(file_get_contents($configPath), true);
+            if (json_last_error() === JSON_ERROR_NONE && isset($config['senders'])) {
+                $this->allowedSenders = $config['senders'];
+            } else {
+                error_log("Warning: Invalid JSON in allowed_senders.json, using default whitelist");
+                $this->allowedSenders = ['MCB'];
+            }
+        } else {
+            // Default fallback if config file doesn't exist
+            $this->allowedSenders = ['MCB'];
+        }
+    }
+    
+    private function isAllowedSender($sender) {
+        return in_array($sender, $this->allowedSenders, true);
+    }
     
     public function parse($sender, $content) {
-        if ($sender !== 'MCB') {
-            return ['error' => 'Invalid sender'];
+        if (!$this->isAllowedSender($sender)) {
+            return ['error' => 'Invalid sender: ' . $sender . '. Allowed: ' . implode(', ', $this->allowedSenders)];
         }
         
         if (strpos($content, 'Juice Summary') !== false) {

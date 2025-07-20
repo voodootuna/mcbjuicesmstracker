@@ -1,0 +1,13 @@
+{
+  "senders": [
+    "MCB",
+    "+23057XXXXXX",
+  ],
+  "description": "Whitelist of allowed SMS senders. Copy this file to allowed_senders.json and customize.",
+  "notes": [
+    "Case-sensitive matching",
+    "Include country codes for phone numbers (+230...)",
+    "Add new senders as needed for different banks or services",
+    "Examples: 'MCB', '+23057XXXXXX', 'SBI', 'ABC Bank'"
+  ]
+}

@@ -41,5 +41,8 @@ temp/
 PLAN.md
 project.md
 
+# Configuration files (contains sender whitelist)
+config/allowed_senders.json
+
 # Keep composer.lock for production consistency
 !composer.lock
