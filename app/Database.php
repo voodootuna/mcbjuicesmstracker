@@ -6,17 +6,45 @@ class Database {
     
     public function __construct() {
         $this->dbPath = __DIR__ . '/../database/payments.db';
+        $this->ensureDatabaseDirectory();
         $this->connect();
         $this->createTables();
     }
     
+    private function ensureDatabaseDirectory() {
+        $dbDir = dirname($this->dbPath);
+        if (!is_dir($dbDir)) {
+            if (!mkdir($dbDir, 0755, true)) {
+                throw new Exception("Failed to create database directory: $dbDir");
+            }
+        }
+        
+        if (!is_writable($dbDir)) {
+            throw new Exception("Database directory is not writable: $dbDir");
+        }
+    }
+    
     private function connect() {
         try {
+            // Check if SQLite3 extension is loaded
+            if (!class_exists('SQLite3')) {
+                throw new Exception("SQLite3 extension is not installed");
+            }
+            
             $this->db = new SQLite3($this->dbPath);
+            
+            // Set optimizations
             $this->db->busyTimeout(5000);
             $this->db->exec('PRAGMA journal_mode = WAL');
+            $this->db->exec('PRAGMA synchronous = NORMAL');
+            $this->db->exec('PRAGMA cache_size = 1000');
+            
         } catch (Exception $e) {
-            throw new Exception("Database connection failed: " . $e->getMessage());
+            $dir = dirname($this->dbPath);
+            $perms = is_dir($dir) ? substr(sprintf('%o', fileperms($dir)), -4) : 'N/A';
+            
+            throw new Exception("Database connection failed: " . $e->getMessage() . 
+                              " (Path: {$this->dbPath}, Dir perms: {$perms})");
         }
     }
     
