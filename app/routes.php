@@ -4,6 +4,24 @@ Flight::route('POST /api/sms', function() {
     header('Content-Type: application/json');
     
     $input = file_get_contents('php://input');
+    
+    // Debug: Log incoming request
+    $debugData = [
+        'timestamp' => date('Y-m-d H:i:s'),
+        'method' => $_SERVER['REQUEST_METHOD'],
+        'headers' => getallheaders(),
+        'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'NOT_SET',
+        'content_length' => $_SERVER['CONTENT_LENGTH'] ?? 'NOT_SET',
+        'raw_body' => $input,
+        'body_length' => strlen($input),
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'NOT_SET'
+    ];
+    
+    file_put_contents(__DIR__ . '/../debug_requests.log', 
+        "=== REQUEST DEBUG ===\n" . 
+        json_encode($debugData, JSON_PRETTY_PRINT) . 
+        "\n\n", FILE_APPEND);
+    
     $data = json_decode($input, true);
     
     if (json_last_error() !== JSON_ERROR_NONE) {

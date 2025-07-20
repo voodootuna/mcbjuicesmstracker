@@ -29,6 +29,7 @@ Thumbs.db
 
 # Logs and temporary files
 *.log
+debug_requests.log
 tmp/
 temp/
 .tmp
