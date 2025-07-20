@@ -24,6 +24,7 @@
         .filters select { padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px; }
         .amount { font-weight: bold; color: #007cba; min-width: 80px; }
         .date { font-size: 12px; min-width: 120px; }
+        .sender { font-family: monospace; font-size: 11px; color: #6c757d; max-width: 100px; }
         .reference { font-family: monospace; font-size: 12px; }
         .order-number { font-family: monospace; font-size: 12px; color: #28a745; }
         .raw-message { max-width: 300px; word-wrap: break-word; font-size: 11px; color: #666; white-space: normal; cursor: pointer; position: relative; }
@@ -45,6 +46,56 @@
         .pagination a:hover { background-color: #f5f5f5; }
         .pagination .current { background-color: #007cba; color: white; border-color: #007cba; }
         .pagination .disabled { color: #ccc; cursor: not-allowed; }
+        
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+            .container { margin: 10px; padding: 15px; }
+            .filters { flex-direction: column; gap: 8px; }
+            .filters input, .filters select, .filters button { width: 100%; margin-bottom: 8px; }
+            .auto-reload { margin-left: 0; margin-top: 10px; }
+            
+            /* Hide less important columns on mobile */
+            table th:nth-child(3), /* Sender */
+            table td:nth-child(3),
+            table th:nth-child(5), /* Reference */
+            table td:nth-child(5),
+            table th:nth-child(8), /* Raw Message */
+            table td:nth-child(8) {
+                display: none;
+            }
+            
+            /* Make remaining columns more mobile-friendly */
+            table { font-size: 12px; }
+            th, td { padding: 8px 4px; }
+            .date { font-size: 10px; min-width: 80px; }
+            .amount { font-size: 12px; min-width: 60px; }
+            .order-number { font-size: 10px; }
+            .btn { padding: 4px 8px; font-size: 10px; margin: 1px; }
+            
+            /* Stack pagination on mobile */
+            .pagination { margin: 15px 0; }
+            .pagination a, .pagination span { padding: 6px 8px; margin: 1px; font-size: 12px; }
+        }
+        
+        @media (max-width: 480px) {
+            /* Ultra-mobile view */
+            .container { margin: 5px; padding: 10px; }
+            h1 { font-size: 18px; }
+            
+            /* Show only essential columns */
+            table th:nth-child(1), /* ID */
+            table td:nth-child(1),
+            table th:nth-child(6), /* Order Number */  
+            table td:nth-child(6) {
+                display: none;
+            }
+            
+            /* Make table more compact */
+            table { font-size: 11px; }
+            th, td { padding: 6px 2px; }
+            .date { font-size: 9px; min-width: 60px; }
+            .amount { font-size: 11px; min-width: 50px; }
+        }
     </style>
 </head>
 <body>
@@ -89,6 +140,7 @@
                 <tr>
                     <th>ID</th>
                     <th>Date</th>
+                    <th>Sender</th>
                     <th>Amount</th>
                     <th>Reference</th>
                     <th>Order Number</th>
@@ -102,6 +154,7 @@
                 <tr data-status="<?= htmlspecialchars($payment['status']) ?>">
                     <td><?= $payment['id'] ?></td>
                     <td class="date"><?= date('M j, Y H:i', strtotime($payment['created_at'])) ?></td>
+                    <td class="sender"><?= htmlspecialchars($payment['sender'] ?? '-') ?></td>
                     <td class="amount">Rs <?= number_format($payment['amount'], 2) ?></td>
                     <td class="reference"><?= htmlspecialchars($payment['reference'] ?? '-') ?></td>
                     <td class="order-number"><?= htmlspecialchars($payment['order_number'] ?? '-') ?></td>

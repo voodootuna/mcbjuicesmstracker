@@ -1,7 +1,7 @@
 {
   "senders": [
     "MCB",
-    "+23057XXXXXX",
+    "+23057XXXXXX"
   ],
   "description": "Whitelist of allowed SMS senders. Copy this file to allowed_senders.json and customize.",
   "notes": [
