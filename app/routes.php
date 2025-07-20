@@ -24,8 +24,9 @@ Flight::route('POST /api/sms', function() {
             "\n\n", FILE_APPEND);
     }
     
-    // Fix newlines in JSON from MacDroid
-    $cleanInput = str_replace(["\n", "\r"], [" ", " "], $input);
+    // Fix newlines and carriage returns in JSON from MacDroid
+    $cleanInput = str_replace(["\n", "\r", "\t"], [" ", " ", " "], $input);
+    $cleanInput = preg_replace('/\s+/', ' ', $cleanInput); // Collapse multiple spaces
     $data = json_decode($cleanInput, true);
     
     if (json_last_error() !== JSON_ERROR_NONE) {
@@ -42,6 +43,12 @@ Flight::route('POST /api/sms', function() {
         Flight::halt(400, json_encode(['error' => 'Invalid JSON: ' . json_last_error_msg()]));
     }
     
+    // Debug: Log successful JSON parsing
+    if (getenv('DEBUG_SMS_REQUESTS') === 'true' || $_ENV['DEBUG_SMS_REQUESTS'] ?? false) {
+        file_put_contents(__DIR__ . '/../debug_requests.log', 
+            "JSON PARSED OK: " . json_encode($data, JSON_PRETTY_PRINT) . "\n\n", FILE_APPEND);
+    }
+    
     if (!isset($data['sender']) || !isset($data['content'])) {
         Flight::halt(400, json_encode(['error' => 'Missing sender or content']));
     }
@@ -49,6 +56,12 @@ Flight::route('POST /api/sms', function() {
     try {
         $parser = new SmsParser();
         $parsedData = $parser->parse($data['sender'], $data['content']);
+        
+        // Debug: Log parsing result
+        if (getenv('DEBUG_SMS_REQUESTS') === 'true' || $_ENV['DEBUG_SMS_REQUESTS'] ?? false) {
+            file_put_contents(__DIR__ . '/../debug_requests.log', 
+                "SMS PARSE RESULT: " . json_encode($parsedData, JSON_PRETTY_PRINT) . "\n\n", FILE_APPEND);
+        }
         
         if (isset($parsedData['error'])) {
             Flight::halt(400, json_encode($parsedData));
