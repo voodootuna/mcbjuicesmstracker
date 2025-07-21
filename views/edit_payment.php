@@ -23,6 +23,7 @@
         .btn-primary { background: #007cba; color: white; }
         .btn-secondary { background: #6c757d; color: white; }
         .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
         .btn:hover { opacity: 0.9; }
         .success { color: #28a745; font-weight: bold; margin: 10px 0; }
         .error { color: #dc3545; font-weight: bold; margin: 10px 0; }
@@ -83,6 +84,7 @@
             
             <button type="submit" class="btn btn-primary">Save Order Details</button>
             <a href="/admin" class="btn btn-secondary">Cancel</a>
+            <button type="button" class="btn btn-danger" onclick="deletePayment()">Delete Payment</button>
         </form>
     </div>
 
@@ -121,6 +123,36 @@
             });
         });
         
+        function deletePayment() {
+            const paymentInfo = `
+Payment #<?= $payment['id'] ?>
+Amount: Rs <?= number_format($payment['amount'], 2) ?>
+Reference: <?= htmlspecialchars($payment['reference'] ?? 'N/A') ?>
+Date: <?= date('M j, Y H:i', strtotime($payment['created_at'])) ?>`;
+
+            if (confirm(`Are you sure you want to DELETE this payment?\n\n${paymentInfo}\n\nThis action CANNOT be undone!`)) {
+                if (confirm('FINAL CONFIRMATION: This will permanently delete the payment record. Are you absolutely sure?')) {
+                    fetch(`/api/payments/<?= $payment['id'] ?>`, {
+                        method: 'DELETE',
+                        headers: {'Content-Type': 'application/json'}
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            showMessage('Payment deleted successfully! Redirecting...', 'success');
+                            setTimeout(() => {
+                                window.location.href = '/admin';
+                            }, 2000);
+                        } else {
+                            showMessage('Error: ' + (result.error || 'Failed to delete payment'), 'error');
+                        }
+                    })
+                    .catch(error => {
+                        showMessage('Error: ' + error.message, 'error');
+                    });
+                }
+            }
+        }
         
         function showMessage(text, type) {
             const messageDiv = document.getElementById('message');

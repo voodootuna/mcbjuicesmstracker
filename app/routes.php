@@ -212,6 +212,31 @@ Flight::route('GET /api/payments/@id', function($id) {
     }
 });
 
+Flight::route('DELETE /api/payments/@id', function($id) {
+    header('Content-Type: application/json');
+    
+    try {
+        $db = new Database();
+        
+        // First check if payment exists
+        $payment = $db->getPaymentById($id);
+        if (!$payment) {
+            Flight::halt(404, json_encode(['error' => 'Payment not found']));
+        }
+        
+        // Delete the payment
+        $result = $db->deletePayment($id);
+        
+        if ($result) {
+            Flight::json(['success' => true, 'message' => 'Payment deleted successfully']);
+        } else {
+            Flight::halt(500, json_encode(['error' => 'Failed to delete payment']));
+        }
+    } catch (Exception $e) {
+        Flight::halt(500, json_encode(['error' => 'Server error: ' . $e->getMessage()]));
+    }
+});
+
 Flight::route('GET /admin', function() {
     try {
         $db = new Database();

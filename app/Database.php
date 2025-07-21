@@ -232,6 +232,14 @@ class Database {
         return $stmt->execute();
     }
     
+    public function deletePayment($id) {
+        $sql = "DELETE FROM payments WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
+        
+        return $stmt->execute();
+    }
+    
     public function getPaymentById($id) {
         $sql = "SELECT * FROM payments WHERE id = :id";
         $stmt = $this->db->prepare($sql);
