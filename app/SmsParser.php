@@ -42,6 +42,7 @@ class SmsParser {
             'amount' => $this->extractAmount($content),
             'reference' => $this->extractReference($content),
             'order_number' => $this->extractOrderNumber($content),
+            'order_id' => null, // To be manually set later
             'payment_date' => $this->extractDate($content),
             'raw_message' => $content
         ];
@@ -68,10 +69,14 @@ class SmsParser {
     }
     
     private function extractOrderNumber($content) {
-        if (preg_match('/&\s*text\s+([A-Z0-9]+)/i', $content, $matches)) {
-            $text = $matches[1];
-            if (preg_match('/^[0-9A-F]{10}$/i', $text)) {
-                return $text;
+        // Look for any text after "& text" 
+        if (preg_match('/&\s*text\s+(.+?)(?:\.\s*MCB|$)/i', $content, $matches)) {
+            $textAfter = $matches[1];
+            
+            // Look for any alphanumeric pattern that looks like an order number
+            // Common patterns: 10-16 characters, mix of letters and numbers
+            if (preg_match('/([A-Z0-9]{8,16})/i', $textAfter, $orderMatches)) {
+                return strtoupper($orderMatches[1]);
             }
         }
         return null;

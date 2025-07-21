@@ -19,6 +19,7 @@
         .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
         .btn-complete { background: #28a745; color: white; }
         .btn-cancel { background: #dc3545; color: white; }
+        .btn-edit { background: #17a2b8; color: white; text-decoration: none; display: inline-block; margin-right: 5px; }
         .btn:hover { opacity: 0.8; }
         .filters { margin-bottom: 20px; }
         .filters select { padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px; }
@@ -27,6 +28,7 @@
         .sender { font-family: monospace; font-size: 11px; color: #6c757d; max-width: 100px; }
         .reference { font-family: monospace; font-size: 12px; }
         .order-number { font-family: monospace; font-size: 12px; color: #28a745; }
+        .order-id { font-family: monospace; font-size: 12px; color: #007cba; }
         .raw-message { max-width: 300px; word-wrap: break-word; font-size: 11px; color: #666; white-space: normal; cursor: pointer; position: relative; }
         .raw-message-short { display: block; }
         .raw-message-full { display: none; }
@@ -59,8 +61,10 @@
             table td:nth-child(3),
             table th:nth-child(5), /* Reference */
             table td:nth-child(5),
-            table th:nth-child(8), /* Raw Message */
-            table td:nth-child(8) {
+            table th:nth-child(7), /* Order ID */
+            table td:nth-child(7),
+            table th:nth-child(9), /* Raw Message */
+            table td:nth-child(9) {
                 display: none;
             }
             
@@ -144,6 +148,7 @@
                     <th>Amount</th>
                     <th>Reference</th>
                     <th>Order Number</th>
+                    <th>Order ID</th>
                     <th>Status</th>
                     <th>Raw Message</th>
                     <th>Actions</th>
@@ -158,6 +163,7 @@
                     <td class="amount">Rs <?= number_format($payment['amount'], 2) ?></td>
                     <td class="reference"><?= htmlspecialchars($payment['reference'] ?? '-') ?></td>
                     <td class="order-number"><?= htmlspecialchars($payment['order_number'] ?? '-') ?></td>
+                    <td class="order-id"><?= htmlspecialchars($payment['order_id'] ?? '-') ?></td>
                     <td>
                         <span class="status <?= $payment['status'] ?>">
                             <?= ucfirst($payment['status']) ?>
@@ -176,6 +182,7 @@
                         </span>
                     </td>
                     <td>
+                        <a href="/admin/edit/<?= $payment['id'] ?>" class="btn btn-edit">Edit</a>
                         <?php if ($payment['status'] === 'pending'): ?>
                             <button class="btn btn-complete" onclick="updateStatus(<?= $payment['id'] ?>, 'completed')">Complete</button>
                             <button class="btn btn-cancel" onclick="updateStatus(<?= $payment['id'] ?>, 'cancelled')">Cancel</button>

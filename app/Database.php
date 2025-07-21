@@ -55,6 +55,7 @@ class Database {
             amount DECIMAL(10,2),
             reference VARCHAR(50),
             order_number VARCHAR(50),
+            order_id VARCHAR(50),
             payment_date DATE,
             raw_message TEXT,
             status VARCHAR(20) DEFAULT 'pending',
@@ -63,8 +64,19 @@ class Database {
         
         $this->db->exec($sql);
         
+        // Add order_id column if it doesn't exist (for existing databases)
+        $this->addOrderIdColumn();
+        
         // Add performance indexes
         $this->createIndexes();
+    }
+    
+    private function addOrderIdColumn() {
+        try {
+            $this->db->exec("ALTER TABLE payments ADD COLUMN order_id VARCHAR(50)");
+        } catch (Exception $e) {
+            // Column already exists, ignore error
+        }
     }
     
     private function createIndexes() {
@@ -73,6 +85,7 @@ class Database {
             "CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status)",
             "CREATE INDEX IF NOT EXISTS idx_payments_reference ON payments(reference)",
             "CREATE INDEX IF NOT EXISTS idx_payments_order_number ON payments(order_number)",
+            "CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id)",
             "CREATE INDEX IF NOT EXISTS idx_payments_status_created ON payments(status, created_at DESC)",
             "CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(payment_date)"
         ];
@@ -83,14 +96,15 @@ class Database {
     }
     
     public function insertPayment($data) {
-        $sql = "INSERT INTO payments (sender, amount, reference, order_number, payment_date, raw_message) 
-                VALUES (:sender, :amount, :reference, :order_number, :payment_date, :raw_message)";
+        $sql = "INSERT INTO payments (sender, amount, reference, order_number, order_id, payment_date, raw_message) 
+                VALUES (:sender, :amount, :reference, :order_number, :order_id, :payment_date, :raw_message)";
         
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':sender', $data['sender'], SQLITE3_TEXT);
         $stmt->bindValue(':amount', $data['amount'], SQLITE3_FLOAT);
         $stmt->bindValue(':reference', $data['reference'], SQLITE3_TEXT);
         $stmt->bindValue(':order_number', $data['order_number'], SQLITE3_TEXT);
+        $stmt->bindValue(':order_id', $data['order_id'] ?? null, SQLITE3_TEXT);
         $stmt->bindValue(':payment_date', $data['payment_date'], SQLITE3_TEXT);
         $stmt->bindValue(':raw_message', $data['raw_message'], SQLITE3_TEXT);
         
@@ -203,6 +217,16 @@ class Database {
         $sql = "UPDATE payments SET status = :status WHERE id = :id";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':status', $status, SQLITE3_TEXT);
+        $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
+        
+        return $stmt->execute();
+    }
+    
+    public function updatePaymentOrderDetails($id, $orderNumber, $orderId) {
+        $sql = "UPDATE payments SET order_number = :order_number, order_id = :order_id WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':order_number', $orderNumber, SQLITE3_TEXT);
+        $stmt->bindValue(':order_id', $orderId, SQLITE3_TEXT);
         $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
         
         return $stmt->execute();

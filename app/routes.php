@@ -168,6 +168,50 @@ Flight::route('PUT /api/payments/@id/status', function($id) {
     }
 });
 
+Flight::route('PUT /api/payments/@id/order', function($id) {
+    header('Content-Type: application/json');
+    
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+    
+    if (!isset($data['order_number']) && !isset($data['order_id'])) {
+        Flight::halt(400, json_encode(['error' => 'Missing order_number or order_id']));
+    }
+    
+    try {
+        $db = new Database();
+        $orderNumber = $data['order_number'] ?? null;
+        $orderId = $data['order_id'] ?? null;
+        
+        $result = $db->updatePaymentOrderDetails($id, $orderNumber, $orderId);
+        
+        if ($result) {
+            Flight::json(['success' => true, 'message' => 'Order details updated']);
+        } else {
+            Flight::halt(404, json_encode(['error' => 'Payment not found']));
+        }
+    } catch (Exception $e) {
+        Flight::halt(500, json_encode(['error' => 'Server error: ' . $e->getMessage()]));
+    }
+});
+
+Flight::route('GET /api/payments/@id', function($id) {
+    header('Content-Type: application/json');
+    
+    try {
+        $db = new Database();
+        $payment = $db->getPaymentById($id);
+        
+        if ($payment) {
+            Flight::json(['payment' => $payment]);
+        } else {
+            Flight::halt(404, json_encode(['error' => 'Payment not found']));
+        }
+    } catch (Exception $e) {
+        Flight::halt(500, json_encode(['error' => 'Server error: ' . $e->getMessage()]));
+    }
+});
+
 Flight::route('GET /admin', function() {
     try {
         $db = new Database();
@@ -200,6 +244,21 @@ Flight::route('GET /admin', function() {
                 'date_to' => $dateTo
             ]
         ]);
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage();
+    }
+});
+
+Flight::route('GET /admin/edit/@id', function($id) {
+    try {
+        $db = new Database();
+        $payment = $db->getPaymentById($id);
+        
+        if (!$payment) {
+            Flight::halt(404, "Payment not found");
+        }
+        
+        Flight::render('edit_payment', ['payment' => $payment]);
     } catch (Exception $e) {
         echo "Error: " . $e->getMessage();
     }
