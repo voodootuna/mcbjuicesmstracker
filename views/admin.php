@@ -8,8 +8,9 @@
         body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
         .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         h1 { color: #333; border-bottom: 2px solid #007cba; padding-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; white-space: nowrap; }
+        .table-container { overflow-x: auto; margin-top: 20px; border: 1px solid #ddd; border-radius: 4px; }
+        table { border-collapse: collapse; width: auto; min-width: 100%; }
+        th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd; white-space: nowrap; }
         th { background-color: #f8f9fa; font-weight: bold; }
         tr:hover { background-color: #f5f5f5; }
         .status { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
@@ -23,13 +24,17 @@
         .btn:hover { opacity: 0.8; }
         .filters { margin-bottom: 20px; }
         .filters select { padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        .amount { font-weight: bold; color: #007cba; min-width: 80px; }
-        .date { font-size: 12px; min-width: 120px; }
-        .sender { font-family: monospace; font-size: 11px; color: #6c757d; max-width: 100px; }
-        .reference { font-family: monospace; font-size: 12px; }
-        .order-number { font-family: monospace; font-size: 12px; color: #28a745; }
-        .order-id { font-family: monospace; font-size: 12px; color: #007cba; }
-        .raw-message { max-width: 300px; word-wrap: break-word; font-size: 11px; color: #666; white-space: normal; cursor: pointer; position: relative; }
+        .date { font-size: 12px; line-height: 1.3; width: 1%; }
+        .date-day { display: block; font-weight: bold; }
+        .date-time { display: block; font-size: 10px; color: #6c757d; }
+        .sender-ref { line-height: 1.2; width: 1%; }
+        .sender-ref-sender { display: block; font-family: monospace; font-size: 11px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; }
+        .sender-ref-reference { display: block; font-family: monospace; font-size: 9px; color: #6c757d; overflow: hidden; text-overflow: ellipsis; }
+        .order-number { font-family: monospace; font-size: 11px; color: #28a745; width: 1%; overflow: hidden; text-overflow: ellipsis; }
+        .order-id { font-family: monospace; font-size: 11px; color: #007cba; width: 1%; overflow: hidden; text-overflow: ellipsis; }
+        .payment-method { font-size: 11px; width: 1%; }
+        .amount { font-weight: bold; color: #007cba; width: 1%; }
+        .raw-message { word-wrap: break-word; font-size: 10px; color: #666; white-space: normal; cursor: pointer; position: relative; }
         .raw-message-short { display: block; }
         .raw-message-full { display: none; }
         .raw-message.expanded .raw-message-short { display: none; }
@@ -106,6 +111,10 @@
     <div class="container">
         <h1>MCB Juice Payment Management</h1>
         
+        <div style="margin-bottom: 20px;">
+            <a href="/admin/new" class="btn btn-primary" style="text-decoration: none; display: inline-block;">+ Create New Payment</a>
+        </div>
+        
         <form method="GET" class="filters">
             <select name="status" onchange="this.form.submit()">
                 <option value="">All Payments</option>
@@ -139,18 +148,19 @@
             </label>
         </form>
         
+        <div class="table-container">
         <table>
             <thead>
                 <tr>
                     <th>ID</th>
                     <th>Date</th>
-                    <th>Sender</th>
+                    <th>Sender/Ref</th>
                     <th>Amount</th>
-                    <th>Reference</th>
-                    <th>Order Number</th>
-                    <th>Order ID</th>
+                    <th>O#</th>
+                    <th>OID</th>
+                    <th>Type</th>
                     <th>Status</th>
-                    <th>Raw Message</th>
+                    <th>Message</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -158,12 +168,20 @@
                 <?php foreach ($payments as $payment): ?>
                 <tr data-status="<?= htmlspecialchars($payment['status']) ?>">
                     <td><?= $payment['id'] ?></td>
-                    <td class="date"><?= date('M j, Y H:i', strtotime($payment['created_at'])) ?></td>
-                    <td class="sender"><?= htmlspecialchars($payment['sender'] ?? '-') ?></td>
+                    <td class="date" title="<?= date('M j, Y H:i:s', strtotime($payment['created_at'])) ?>">
+                        <span class="date-day"><?= date('M j', strtotime($payment['created_at'])) ?></span>
+                        <span class="date-time"><?= date('H:i', strtotime($payment['created_at'])) ?></span>
+                    </td>
+                    <td class="sender-ref" title="Sender: <?= htmlspecialchars($payment['sender'] ?? '') ?>&#10;Ref: <?= htmlspecialchars($payment['reference'] ?? '') ?>">
+                        <span class="sender-ref-sender"><?= htmlspecialchars($payment['sender'] ?? '-') ?></span>
+                        <span class="sender-ref-reference"><?= htmlspecialchars($payment['reference'] ?? '-') ?></span>
+                    </td>
                     <td class="amount">Rs <?= number_format($payment['amount'], 2) ?></td>
-                    <td class="reference"><?= htmlspecialchars($payment['reference'] ?? '-') ?></td>
-                    <td class="order-number"><?= htmlspecialchars($payment['order_number'] ?? '-') ?></td>
-                    <td class="order-id"><?= htmlspecialchars($payment['order_id'] ?? '-') ?></td>
+                    <td class="order-number" title="<?= htmlspecialchars($payment['order_number'] ?? '') ?>"><?= htmlspecialchars($payment['order_number'] ?? '-') ?></td>
+                    <td class="order-id" title="<?= htmlspecialchars($payment['order_id'] ?? '') ?>"><?= htmlspecialchars($payment['order_id'] ?? '-') ?></td>
+                    <td class="payment-method">
+                        <?= ($payment['payment_method'] ?? 'mobile_number') == 'bank_transfer' ? 'Bank' : 'Mobile' ?>
+                    </td>
                     <td>
                         <span class="status <?= $payment['status'] ?>">
                             <?= ucfirst($payment['status']) ?>
@@ -171,8 +189,8 @@
                     </td>
                     <td class="raw-message" onclick="toggleMessage(this)">
                         <span class="raw-message-short">
-                            <?= htmlspecialchars(substr($payment['raw_message'], 0, 100)) ?>
-                            <?php if (strlen($payment['raw_message']) > 100): ?>
+                            <?= htmlspecialchars(substr($payment['raw_message'], 0, 50)) ?>
+                            <?php if (strlen($payment['raw_message']) > 50): ?>
                                 <span class="expand-indicator">... [click to expand]</span>
                             <?php endif; ?>
                         </span>
@@ -192,6 +210,7 @@
                 <?php endforeach; ?>
             </tbody>
         </table>
+        </div>
         
         <?php if ($pagination['total_pages'] > 1): ?>
         <div class="pagination">

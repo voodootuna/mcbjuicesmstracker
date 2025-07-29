@@ -67,6 +67,9 @@ class Database {
         // Add order_id column if it doesn't exist (for existing databases)
         $this->addOrderIdColumn();
         
+        // Add payment_method column if it doesn't exist
+        $this->addPaymentMethodColumn();
+        
         // Add performance indexes
         $this->createIndexes();
     }
@@ -74,6 +77,14 @@ class Database {
     private function addOrderIdColumn() {
         try {
             $this->db->exec("ALTER TABLE payments ADD COLUMN order_id VARCHAR(50)");
+        } catch (Exception $e) {
+            // Column already exists, ignore error
+        }
+    }
+    
+    private function addPaymentMethodColumn() {
+        try {
+            $this->db->exec("ALTER TABLE payments ADD COLUMN payment_method VARCHAR(20) DEFAULT 'mobile_number' CHECK(payment_method IN ('mobile_number', 'bank_transfer'))");
         } catch (Exception $e) {
             // Column already exists, ignore error
         }
@@ -87,7 +98,8 @@ class Database {
             "CREATE INDEX IF NOT EXISTS idx_payments_order_number ON payments(order_number)",
             "CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id)",
             "CREATE INDEX IF NOT EXISTS idx_payments_status_created ON payments(status, created_at DESC)",
-            "CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(payment_date)"
+            "CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(payment_date)",
+            "CREATE INDEX IF NOT EXISTS idx_payments_payment_method ON payments(payment_method)"
         ];
         
         foreach ($indexes as $index) {
@@ -96,8 +108,8 @@ class Database {
     }
     
     public function insertPayment($data) {
-        $sql = "INSERT INTO payments (sender, amount, reference, order_number, order_id, payment_date, raw_message) 
-                VALUES (:sender, :amount, :reference, :order_number, :order_id, :payment_date, :raw_message)";
+        $sql = "INSERT INTO payments (sender, amount, reference, order_number, order_id, payment_date, raw_message, payment_method) 
+                VALUES (:sender, :amount, :reference, :order_number, :order_id, :payment_date, :raw_message, :payment_method)";
         
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':sender', $data['sender'], SQLITE3_TEXT);
@@ -107,6 +119,7 @@ class Database {
         $stmt->bindValue(':order_id', $data['order_id'] ?? null, SQLITE3_TEXT);
         $stmt->bindValue(':payment_date', $data['payment_date'], SQLITE3_TEXT);
         $stmt->bindValue(':raw_message', $data['raw_message'], SQLITE3_TEXT);
+        $stmt->bindValue(':payment_method', $data['payment_method'] ?? 'mobile_number', SQLITE3_TEXT);
         
         $result = $stmt->execute();
         return $result ? $this->db->lastInsertRowID() : false;
@@ -227,6 +240,15 @@ class Database {
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':order_number', $orderNumber, SQLITE3_TEXT);
         $stmt->bindValue(':order_id', $orderId, SQLITE3_TEXT);
+        $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
+        
+        return $stmt->execute();
+    }
+    
+    public function updatePaymentMethod($id, $paymentMethod) {
+        $sql = "UPDATE payments SET payment_method = :payment_method WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':payment_method', $paymentMethod, SQLITE3_TEXT);
         $stmt->bindValue(':id', $id, SQLITE3_INTEGER);
         
         return $stmt->execute();

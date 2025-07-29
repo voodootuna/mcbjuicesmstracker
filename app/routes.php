@@ -289,6 +289,73 @@ Flight::route('GET /admin/edit/@id', function($id) {
     }
 });
 
+Flight::route('GET /admin/new', function() {
+    Flight::render('new_payment');
+});
+
+Flight::route('POST /admin/new', function() {
+    try {
+        // Get form data
+        $sender = trim($_POST['sender'] ?? '');
+        $amount = floatval($_POST['amount'] ?? 0);
+        $reference = trim($_POST['reference'] ?? '');
+        $payment_date = $_POST['payment_date'] ?? date('Y-m-d');
+        $payment_time = $_POST['payment_time'] ?? date('H:i');
+        $order_number = trim($_POST['order_number'] ?? '');
+        $order_id = trim($_POST['order_id'] ?? '');
+        $raw_message = trim($_POST['raw_message'] ?? '');
+        $status = $_POST['status'] ?? 'pending';
+        $payment_method = $_POST['payment_method'] ?? 'mobile_number';
+        
+        // Combine date and time for payment_date field
+        $payment_datetime = $payment_date . ' ' . $payment_time . ':00';
+        
+        // Validate required fields
+        if (empty($sender) || empty($reference) || $amount <= 0) {
+            Flight::render('new_payment', [
+                'error' => 'Please fill in all required fields'
+            ]);
+            return;
+        }
+        
+        // Prepare data for insertion
+        $data = [
+            'sender' => $sender,
+            'amount' => $amount,
+            'reference' => $reference,
+            'payment_date' => $payment_datetime,
+            'order_number' => $order_number ?: null,
+            'order_id' => $order_id ?: null,
+            'raw_message' => $raw_message ?: "Manual entry created on " . date('Y-m-d H:i:s'),
+            'payment_method' => $payment_method
+        ];
+        
+        // Insert into database
+        $db = new Database();
+        $payment_id = $db->insertPayment($data);
+        
+        if ($payment_id) {
+            // Update status if not pending
+            if ($status !== 'pending') {
+                $db->updatePaymentStatus($payment_id, $status);
+            }
+            
+            Flight::render('new_payment', [
+                'success' => true,
+                'payment_id' => $payment_id
+            ]);
+        } else {
+            Flight::render('new_payment', [
+                'error' => 'Failed to create payment'
+            ]);
+        }
+    } catch (Exception $e) {
+        Flight::render('new_payment', [
+            'error' => 'Error: ' . $e->getMessage()
+        ]);
+    }
+});
+
 Flight::route('GET /', function() {
     Flight::json(['message' => 'MCB Juice Payment API', 'version' => '1.0']);
 });

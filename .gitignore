@@ -47,3 +47,9 @@ config/allowed_senders.json
 
 # Keep composer.lock for production consistency
 !composer.lock
+
+# QR parser folder
+qr_parser/
+
+# Documentation folder
+docs/

@@ -3,6 +3,7 @@
     "description": "MCB Juice Payment SMS Processing API",
     "type": "project",
     "require": {
-        "flightphp/core": "^3.16"
+        "flightphp/core": "^3.16",
+        "endroid/qr-code": "^6.0"
     }
 }

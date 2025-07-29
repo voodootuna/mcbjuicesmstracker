@@ -54,17 +54,23 @@
             <p><strong>Sender:</strong> <?= htmlspecialchars($payment['sender']) ?></p>
             <p><strong>Reference:</strong> <?= htmlspecialchars($payment['reference'] ?? 'N/A') ?></p>
             <p><strong>Date:</strong> <?= date('M j, Y H:i', strtotime($payment['created_at'])) ?></p>
+            <p><strong>Payment Method:</strong> <?= $payment['payment_method'] == 'bank_transfer' ? 'Bank Transfer' : 'Mobile Number (SMS)' ?></p>
             <p><strong>Raw Message:</strong></p>
             <textarea readonly class="readonly"><?= htmlspecialchars($payment['raw_message']) ?></textarea>
         </div>
         
-        <div class="info-section">
-            <h3>Current Status</h3>
-            <p><strong>Status:</strong> <span class="status <?= $payment['status'] ?>"><?= ucfirst($payment['status']) ?></span></p>
-        </div>
-        
         <form id="editForm">
-            <h3>Edit Order Details</h3>
+            <h3>Edit Payment Details</h3>
+            
+            <div class="form-group">
+                <label for="status">Payment Status</label>
+                <select id="status" name="status">
+                    <option value="pending" <?= $payment['status'] == 'pending' ? 'selected' : '' ?>>Pending</option>
+                    <option value="completed" <?= $payment['status'] == 'completed' ? 'selected' : '' ?>>Completed</option>
+                    <option value="cancelled" <?= $payment['status'] == 'cancelled' ? 'selected' : '' ?>>Cancelled</option>
+                </select>
+            </div>
+            
             <div class="form-row">
                 <div class="form-group">
                     <label for="order_number">Order Number</label>
@@ -82,7 +88,7 @@
             
             <div id="message"></div>
             
-            <button type="submit" class="btn btn-primary">Save Order Details</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
             <a href="/admin" class="btn btn-secondary">Cancel</a>
             <button type="button" class="btn btn-danger" onclick="deletePayment()">Delete Payment</button>
         </form>
@@ -93,34 +99,51 @@
             e.preventDefault();
             
             const formData = new FormData(this);
-            const data = {
-                order_number: formData.get('order_number') || null,
-                order_id: formData.get('order_id') || null
-            };
+            const status = formData.get('status');
+            const order_number = formData.get('order_number') || null;
+            const order_id = formData.get('order_id') || null;
             
-            // Update order details only
-            fetch(`/api/payments/<?= $payment['id'] ?>/order`, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    order_number: data.order_number,
-                    order_id: data.order_id
+            // Track promises for both updates
+            const promises = [];
+            
+            // Update status
+            promises.push(
+                fetch(`/api/payments/<?= $payment['id'] ?>/status`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ status: status })
                 })
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    showMessage('Order details updated successfully!', 'success');
-                    setTimeout(() => {
-                        window.location.href = '/admin';
-                    }, 1500);
-                } else {
-                    showMessage('Error: ' + (result.error || 'Unknown error'), 'error');
-                }
-            })
-            .catch(error => {
-                showMessage('Error: ' + error.message, 'error');
-            });
+            );
+            
+            // Update order details
+            promises.push(
+                fetch(`/api/payments/<?= $payment['id'] ?>/order`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        order_number: order_number,
+                        order_id: order_id
+                    })
+                })
+            );
+            
+            // Execute both updates
+            Promise.all(promises)
+                .then(responses => Promise.all(responses.map(r => r.json())))
+                .then(results => {
+                    if (results.every(r => r.success)) {
+                        showMessage('Payment details updated successfully!', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/admin';
+                        }, 1500);
+                    } else {
+                        const errors = results.filter(r => !r.success).map(r => r.error || 'Unknown error');
+                        showMessage('Error: ' + errors.join(', '), 'error');
+                    }
+                })
+                .catch(error => {
+                    showMessage('Error: ' + error.message, 'error');
+                });
         });
         
         function deletePayment() {
