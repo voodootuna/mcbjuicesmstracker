@@ -44,7 +44,8 @@ class SmsParser {
             'order_number' => $this->extractOrderNumber($content),
             'order_id' => null, // To be manually set later
             'payment_date' => $this->extractDate($content),
-            'raw_message' => $content
+            'raw_message' => $content,
+            'payment_method' => 'mobile_number' // SMS payments are mobile_number type
         ];
         
         if (!$data['amount']) {
