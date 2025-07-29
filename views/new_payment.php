@@ -51,10 +51,10 @@
         <form method="POST" action="/admin/new">
             <div class="form-row">
                 <div class="form-group">
-                    <label>Sender Phone <span class="required">*</span></label>
+                    <label>Sender <span class="required">*</span></label>
                     <input type="text" name="sender" value="<?= $_POST['sender'] ?? '' ?>" required 
-                           placeholder="e.g., 57123456" pattern="[0-9]+" title="Enter phone number without spaces or special characters">
-                    <div class="help-text">Enter the sender's phone number</div>
+                           placeholder="e.g., MCB">
+                    <div class="help-text">Payment sender (typically MCB for bank transfers)</div>
                 </div>
                 
                 <div class="form-group">

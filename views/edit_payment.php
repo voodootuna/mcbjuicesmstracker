@@ -6,18 +6,18 @@
     <title>Edit Payment #<?= $payment['id'] ?> - MCB Juice Payment Admin</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden; }
         h1 { color: #333; border-bottom: 2px solid #007cba; padding-bottom: 10px; }
         .back-link { color: #007cba; text-decoration: none; margin-bottom: 20px; display: inline-block; }
         .back-link:hover { text-decoration: underline; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
         .form-group input, .form-group textarea, .form-group select { 
-            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; 
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; box-sizing: border-box;
         }
         .form-group textarea { height: 80px; resize: vertical; }
-        .form-row { display: flex; gap: 20px; }
-        .form-row .form-group { flex: 1; }
+        .form-row { display: flex; gap: 20px; align-items: flex-start; }
+        .form-row .form-group { flex: 1; min-width: 0; }
         .readonly { background-color: #f8f9fa; color: #6c757d; }
         .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; margin-right: 10px; }
         .btn-primary { background: #007cba; color: white; }
@@ -37,7 +37,7 @@
         
         @media (max-width: 768px) {
             .container { margin: 10px; padding: 15px; }
-            .form-row { flex-direction: column; gap: 0; }
+            .form-row { flex-direction: column; gap: 10px; }
             .btn { width: 100%; margin-bottom: 10px; margin-right: 0; }
         }
     </style>
